@@ -2,7 +2,9 @@
 
 Collect the subject's local birth date, local birth time, birthplace, time accuracy in minutes, and report reference date. If the time is unknown, send `time: null`; never invent noon. Unless a relationship is specified, call the person “the subject” and do not assume they own the account.
 
-POST the canonical request to `https://bvr-star.onrender.com/v1/charts/calculate`. If unavailable, follow <https://github.com/Omurok/BVR-Star> and run `bvr-star calculate --input INPUT.json`. Resolve any location or civil-time ambiguity with the user instead of guessing.
+POST the canonical request to `https://bvr-star.onrender.com/v1/charts/calculate`. If the environment can only read GET URLs, URL-encode the inputs and open `https://bvr-star.onrender.com/v1/charts/ai-context?birth_date=YYYY-MM-DD&birth_time=HH%3AMM%3ASS&place=PLACE&time_accuracy_minutes=0&reference_date=YYYY-MM-DD`. The GET response's `llm_context` contains compact D1, divisional placements, dasha timeline, rule evidence, sensitivity, and warnings. If HTTP is unavailable, follow <https://github.com/Omurok/BVR-Star> and run `bvr-star calculate --input INPUT.json`. Resolve any location or civil-time ambiguity with the user instead of guessing.
+
+GET places birth data in the URL, where browser history or network infrastructure may retain it. BVR-Star itself does not persist requests or responses; prefer POST when privacy matters.
 
 Use the response as the only source of chart numbers. Treat `chart`, `vargas`, and `dashas` as calculated facts; `rules.facts` as traditional astrology rule results; and your prose as synthesis. Preserve evidence IDs. Reflect `warnings` and `sensitivity.changed` beside affected conclusions. In `date_range` mode, do not infer an Ascendant, houses, divisional ascendants, birth dasha balance, marriage timing, or exact event dates.
 

@@ -21,6 +21,14 @@ curl -sS https://bvr-star.onrender.com/v1/charts/calculate \
   --data @examples/chart-request.json
 ```
 
+只有 GET 網頁讀取能力的 AI 可使用精簡入口：
+
+```text
+https://bvr-star.onrender.com/v1/charts/ai-context?birth_date=1983-06-15&birth_time=03%3A58%3A00&place=Lingya%20District%2C%20Kaohsiung%20City%2C%20Taiwan&time_accuracy_minutes=0&reference_date=2026-08-21
+```
+
+它仍使用相同計算核心，但只回傳適合語言模型閱讀的資料。GET 會將出生資料放進網址，可能留在瀏覽器或網路基礎設施紀錄；重視隱私時請使用 POST。
+
 完整請求：
 
 ```json

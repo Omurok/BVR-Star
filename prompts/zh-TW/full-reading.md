@@ -8,7 +8,7 @@
 
 ## 2. 呼叫 BVR-Star
 
-優先呼叫公開 API：
+若你能發送 HTTP POST，優先呼叫完整公開 API：
 
 `POST https://bvr-star.onrender.com/v1/charts/calculate`
 
@@ -32,6 +32,25 @@ Content-Type 為 `application/json`，本文格式：
 }
 ```
 
+若目前只有一般網頁讀取／搜尋工具，不能發送 POST，改用 AI 專用 GET 入口。先將每個參數作 URL encoding，再開啟：
+
+```text
+https://bvr-star.onrender.com/v1/charts/ai-context?birth_date=1983-06-15&birth_time=03%3A58%3A00&place=Lingya%20District%2C%20Kaohsiung%20City%2C%20Taiwan&time_accuracy_minutes=0&reference_date=2026-08-21
+```
+
+GET 參數：
+
+- `birth_date`：必填，`YYYY-MM-DD`
+- `birth_time`：當地時間，`HH:mm` 或 `HH:mm:ss`；不知道時間時省略
+- `place`：出生地，建議包含行政區、城市與國家
+- `time_accuracy_minutes`：時間誤差分鐘數，預設 0
+- `reference_date`：報告參考日期，建議明確傳入
+- 已知精確資料時，可用 `latitude`、`longitude`、`timezone` 取代地址解析；三者必須一起傳入
+
+GET 回應的 `llm_context` 已包含 D1、全部支援分盤的精簡落點、大運時間線、規則證據、敏感度與警告。只能在成功取得 JSON 後開始解讀。若得到 405，代表錯用了 `/v1/charts/calculate`；網頁工具應改用 `/v1/charts/ai-context`。
+
+隱私提醒：GET 會把出生資料放在網址中，可能留在瀏覽器紀錄或網路基礎設施日誌。BVR-Star 應用程式本身不持久保存請求或回應；重視隱私時仍應使用 POST。
+
 如果公開 API 無法使用，依 <https://github.com/Omurok/BVR-Star> 的 README 在本機執行：
 
 `bvr-star calculate --input INPUT.json`
@@ -42,8 +61,8 @@ Content-Type 為 `application/json`，本文格式：
 
 - 星體度數、星座、月宿、Pada、上升、宮位、分盤與大運只採用 API 回應，不自行重算或覆寫。
 - 以 `provenance` 說明 Raman Ayanāṃśa、平均交點、整宮制、規則集與星曆來源。
-- 將 `chart`、`vargas`、`dashas` 稱為「計算事實」。
-- 將 `rules.facts` 稱為「傳統占星規則結果」，並保留 `id` 或 `evidence.ids` 方便查證。
+- 完整 POST 回應中的 `chart`、`vargas`、`dashas`，或 GET 回應中的 `llm_context`，稱為「計算事實」。
+- 將 `rules.facts` 或 `llm_context.important_rule_facts` 稱為「傳統占星規則結果」，並保留 `id` 或 `evidence.ids` 方便查證。
 - 將由多項資料合成的敘述稱為「綜合解讀」，不要包裝成已證實的人格、命運或診斷。
 - 優先閱讀 `llm_context`，需要精確細節時回查完整欄位。
 - 在相關段落附近揭露 `warnings` 與 `sensitivity.changed`；不穩定的分盤或宮位不得下確定結論。

@@ -6,7 +6,10 @@ import os
 import time
 import uuid
 from collections import defaultdict, deque
+from datetime import date
+from datetime import time as civil_time
 from threading import Lock
+from typing import Annotated
 
 from fastapi import FastAPI, Query, Request
 from fastapi.exceptions import RequestValidationError
@@ -18,7 +21,7 @@ from bvr_star.config import public_config
 from bvr_star.location.nominatim import NominatimGeocoder
 from bvr_star.location.resolve import resolve_location
 from bvr_star.models.errors import BVRStarError
-from bvr_star.models.request import BirthInput, ChartRequest
+from bvr_star.models.request import BirthInput, ChartOptions, ChartRequest
 from bvr_star.prompting import render_prompt
 from bvr_star.service import ChartService
 from bvr_star.version import __version__
@@ -107,6 +110,87 @@ async def calculate_chart(payload: ChartRequest, request: Request):
         return _error("RATE_LIMIT_EXCEEDED", "Chart rate limit exceeded.", status=429)
     result = await run_in_threadpool(service.calculate, payload)
     return result.model_dump(mode="json")
+
+
+@app.get(
+    "/v1/charts/ai-context",
+    tags=["charts"],
+    summary="Calculate an AI-readable chart through a GET-only web tool",
+    description=(
+        "Compatibility endpoint for AI web readers that cannot send HTTP POST. "
+        "Birth data appears in the URL and may be retained by browsers or network infrastructure; "
+        "use the POST endpoint when privacy matters."
+    ),
+)
+async def calculate_ai_context(
+    request: Request,
+    birth_date: Annotated[
+        date,
+        Query(description="Local civil birth date in YYYY-MM-DD format."),
+    ],
+    birth_time: Annotated[
+        civil_time | None,
+        Query(description="Local civil birth time in HH:MM or HH:MM:SS format. Omit for date-range mode."),
+    ] = None,
+    place: Annotated[
+        str | None,
+        Query(
+            min_length=2,
+            max_length=500,
+            description="Precise birthplace, preferably district, city, and country.",
+        ),
+    ] = None,
+    latitude: Annotated[float | None, Query(ge=-90, le=90)] = None,
+    longitude: Annotated[float | None, Query(ge=-180, le=180)] = None,
+    timezone: Annotated[
+        str | None,
+        Query(description="IANA timezone; required together with latitude and longitude."),
+    ] = None,
+    time_accuracy_minutes: Annotated[int, Query(ge=0, le=720)] = 0,
+    reference_date: Annotated[
+        date | None,
+        Query(description="Date used to select active dashas; defaults to the service date."),
+    ] = None,
+):
+    client = request.client.host if request.client else "unknown"
+    if not _allow(client, "chart", int(os.getenv("BVR_CHART_RATE", "30"))):
+        return _error("RATE_LIMIT_EXCEEDED", "Chart rate limit exceeded.", status=429)
+    birth = BirthInput(
+        date=birth_date,
+        time=birth_time,
+        place=place,
+        latitude=latitude,
+        longitude=longitude,
+        timezone=timezone,
+        time_accuracy_minutes=time_accuracy_minutes,
+    )
+    options = (
+        ChartOptions(reference_date=reference_date)
+        if reference_date is not None
+        else ChartOptions()
+    )
+    payload = ChartRequest(birth=birth, options=options)
+    result = await run_in_threadpool(service.calculate, payload)
+    data = result.model_dump(mode="json")
+    return {
+        "schema_version": data["schema_version"],
+        "mode": data["mode"],
+        "provenance": data["provenance"],
+        "location": data["location"],
+        "time": data["time"],
+        "llm_context": data["llm_context"],
+        "warnings": [
+            "GET_QUERY_CONTAINS_BIRTH_DATA",
+            *data["warnings"],
+        ],
+        "data_handling": {
+            "application_storage": "BVR-Star does not persist the request or response.",
+            "url_privacy": (
+                "GET query parameters can remain in browser history and network infrastructure logs. "
+                "Use POST /v1/charts/calculate when privacy matters."
+            ),
+        },
+    }
 
 
 @app.get("/v1/prompts/full-reading", response_class=PlainTextResponse, tags=["prompts"])

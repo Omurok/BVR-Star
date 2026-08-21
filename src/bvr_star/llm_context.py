@@ -23,6 +23,22 @@ def _active_path(periods: list[DashaPeriod]) -> list[dict[str, Any]]:
     return []
 
 
+def _dasha_tree(periods: list[DashaPeriod]) -> list[dict[str, Any]]:
+    """Keep the complete generated timeline while removing repeated model metadata."""
+
+    return [
+        {
+            "level": period.level,
+            "lord": period.lord,
+            "start_utc": period.start_utc.isoformat(),
+            "end_utc": period.end_utc.isoformat(),
+            "active": period.active,
+            "children": _dasha_tree(period.children),
+        }
+        for period in periods
+    ]
+
+
 def build_llm_context(
     chart: NatalChart,
     vargas: dict[str, VargaChart],
@@ -45,6 +61,30 @@ def build_llm_context(
         for key, value in chart.planets.items()
     }
     important = sorted(rules.facts, key=lambda fact: fact.strength, reverse=True)[:30]
+    compact_vargas = {
+        key: {
+            "ascendant": {
+                "sign": value.ascendant.sign_name_zh,
+                "sign_key": value.ascendant.sign_key,
+                "boundary_distance_degrees": round(
+                    value.ascendant.boundary_distance_degrees, 6
+                ),
+                "evidence_id": value.ascendant.evidence_id,
+            },
+            "planets": {
+                planet_key: {
+                    "sign": placement.sign_name_zh,
+                    "sign_key": placement.sign_key,
+                    "boundary_distance_degrees": round(
+                        placement.boundary_distance_degrees, 6
+                    ),
+                    "evidence_id": placement.evidence_id,
+                }
+                for planet_key, placement in value.placements.items()
+            },
+        }
+        for key, value in vargas.items()
+    }
     return {
         "instruction": "Use these computed facts as the sole chart data; do not recalculate degrees.",
         "ascendant": {
@@ -61,7 +101,9 @@ def build_llm_context(
             key: {"sign": value.ascendant.sign_name_zh, "sign_key": value.ascendant.sign_key}
             for key, value in vargas.items()
         },
+        "vargas": compact_vargas,
         "active_dasha": _active_path(dashas.periods),
+        "dasha_timeline": _dasha_tree(dashas.periods),
         "important_rule_facts": [fact.model_dump(mode="json") for fact in important],
         "sensitivity": sensitivity.model_dump(mode="json"),
         "warnings": warnings,
