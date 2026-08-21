@@ -10,9 +10,9 @@
 
 1. 打開 [BVR-Star 網頁表單](https://bvr-star.onrender.com/)；
 2. 輸入出生日期、時間與出生地；
-3. 計算完成後按「複製給 AI」，貼到 ChatGPT、Claude、Gemini 或其他模型。
+3. 計算完成後按「複製完整 Prompt 給 AI」，貼到全新的 ChatGPT、Claude、Gemini 或其他模型對話。
 
-網站只負責排出星盤資料，不會呼叫 OpenAI，也不需要 AI API 金鑰。BVR-Star 應用程式不把出生資料或回應寫入資料庫；模型解讀仍由使用者選擇的平台負責。詳細界線見[隱私政策](https://bvr-star.onrender.com/privacy)。
+複製內容已包含完整解讀規則、出生資料及本次全部計算輸出，不依賴任何先前對話。網站只負責排出星盤資料，不會呼叫 OpenAI，也不需要 AI API 金鑰。BVR-Star 應用程式不把出生資料或回應寫入資料庫；模型解讀仍由使用者選擇的平台負責。詳細界線見[隱私政策](https://bvr-star.onrender.com/privacy)。
 
 若要建立可自動呼叫 BVR-Star 的自訂 GPT：
 

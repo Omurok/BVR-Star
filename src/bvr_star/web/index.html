@@ -116,7 +116,7 @@
       <div class="result-actions">
         <button class="primary-button copy-button" id="copyButton" type="button">
           <svg viewBox="0 0 24 24" aria-hidden="true"><rect x="8" y="8" width="12" height="12" rx="2"></rect><path d="M16 8V6a2 2 0 0 0-2-2H6a2 2 0 0 0-2 2v8a2 2 0 0 0 2 2h2"></path></svg>
-          複製給 AI
+          複製完整 Prompt 給 AI
         </button>
         <button class="secondary-button" id="downloadButton" type="button">
           <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 3v12"></path><path d="m7 10 5 5 5-5"></path><path d="M5 21h14"></path></svg>
@@ -127,13 +127,18 @@
       <p class="copy-status" id="copyStatus" role="status" aria-live="polite"></p>
 
       <details class="technical-details">
+        <summary>查看將複製給 AI 的完整 Prompt</summary>
+        <pre id="aiPromptPreview" tabindex="0"></pre>
+      </details>
+
+      <details class="technical-details">
         <summary>查看技術資料</summary>
         <pre id="technicalJson" tabindex="0"></pre>
       </details>
 
       <section class="next-step" aria-labelledby="nextStepHeading">
         <h2 id="nextStepHeading"><span aria-hidden="true">1</span>接下來怎麼做？</h2>
-        <p>按下「複製給 AI」，再貼到你慣用的 ChatGPT、Claude 或 Gemini。模型只負責解讀，不會重新計算星盤。</p>
+        <p>按下「複製完整 Prompt 給 AI」，再貼到全新的 ChatGPT、Claude 或 Gemini 對話。Prompt 已包含解讀規則、出生資料與完整計算結果，不需要之前的聊天紀錄。</p>
       </section>
 
       <aside class="warning-panel" id="warningPanel" aria-labelledby="warningHeading" hidden>

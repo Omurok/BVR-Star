@@ -10,6 +10,7 @@ const formStatus = document.querySelector("#formStatus");
 const summaryList = document.querySelector("#summaryList");
 const warningPanel = document.querySelector("#warningPanel");
 const warningList = document.querySelector("#warningList");
+const aiPromptPreview = document.querySelector("#aiPromptPreview");
 const technicalJson = document.querySelector("#technicalJson");
 const copyButton = document.querySelector("#copyButton");
 const downloadButton = document.querySelector("#downloadButton");
@@ -197,6 +198,7 @@ function renderResult(data) {
 
   renderWarnings(data);
   technicalJson.textContent = JSON.stringify(data, null, 2);
+  aiPromptPreview.textContent = aiPromptText();
   copyStatus.textContent = "";
   intakeSection.hidden = true;
   stepsSection.hidden = true;
@@ -205,23 +207,58 @@ function renderResult(data) {
   resultSection.scrollIntoView({behavior: "smooth", block: "start"});
 }
 
-function compactForAi() {
-  return {
-    schema_version: currentResult.schema_version,
-    mode: currentResult.mode,
-    provenance: currentResult.provenance,
-    location: currentResult.location,
-    time: currentResult.time,
-    llm_context: currentResult.llm_context,
-    warnings: currentResult.warnings || [],
-  };
-}
-
 function aiPromptText() {
-  const instructions = `以下資料已由 BVR-Star 依 Raman Ayanamsha、恆星黃道、整宮制、Parashari 規則與 Vimshottari 大運完成程式計算。請只解讀 JSON 中已算好的資料，不要自行重算或改寫星體度數、上升、宮位、分盤與大運。
+  const instructions = `# BVR-Star 印度星盤完整解讀任務
 
-請以繁體中文完成涵蓋性格、家庭、事業、姻緣、財富、外貌、健康與人生階段的完整報告。先核對解析地點、當地時間、時區及警告；區分程式計算事實、傳統占星推論與綜合解讀。依 sensitivity 降低不穩定結論的強度。列出 3–6 個附大運或規則證據的過往時間窗供命主核對，但只能寫成可能主題，不得宣稱已確定發生。除非另有說明，稱盤主為「命主」，不要預設是帳號本人。占星不是科學、醫療、法律或財務診斷。`;
-  return `${instructions}\n\nBVR-Star 計算資料：\n${JSON.stringify(compactForAi(), null, 2)}`;
+這是一份可以貼進全新 AI 對話、獨立完成的任務。不要假設你讀過任何先前對話，也不要再要求使用者提供出生資料；本 Prompt 尾端已附上出生資料及 BVR-Star 的完整程式計算結果。
+
+## 角色與資料界線
+
+你是一位嚴謹的印度占星報告撰寫助手，不冒充 Bangalore Venkata Raman 本人。以下 JSON 已由 BVR-Star 依 Raman Ayanamsha、恆星黃道、平均月交點、整宮制、Parashari 規則及 Vimshottari 大運完成確定性計算。
+
+- 只能使用 JSON 中的 chart、vargas、dashas、rules、llm_context、warnings、sensitivity、location、time 與 provenance 作為星盤事實。
+- 不得自行重算、猜測、修正或覆寫星體度數、星座、月宿、Pada、上升、宮位、分盤、相位與大運。
+- 清楚區分「程式計算事實」「傳統占星規則結果」與「綜合解讀」，不可把解讀寫成已科學證實的事實。
+- 除非資料另有說明，全文稱盤主為「命主」，不要預設命主是帳號本人，也不要從其他對話或個人資料反向校準。
+
+## 開始前核對
+
+先簡短列出並核對：出生日期、出生地當地時間、解析地點、經緯度、IANA 時區、計算模式、Raman 設定、參考日期、資料來源版本及所有 warnings。若 mode 是 date_range，只能分析整日穩定資料；不得補猜上升、宮位、分盤上升、大運出生餘額、婚期或精確事件時間。
+
+## 報告內容
+
+請以繁體中文撰寫客觀、全面、可核對的完整報告，依序包含：
+
+1. 資料、方法、可信度與限制；
+2. 命盤骨架、最強結構及主要證據；
+3. 性格、思考、情緒、優勢與盲點；
+4. 外貌、氣質及他人第一印象；
+5. 原生家庭、父母、手足、居住與家族課題；
+6. 學習、技能、事業型態、工作環境、合作與發展階段；
+7. 感情模式、姻緣、親密需求、配偶互動與婚姻課題；
+8. 財富來源、收入、資產、風險及資源管理；
+9. 健康與壓力傾向，只作一般生活反思，不作醫療診斷；
+10. Vimshottari 大運、次運與重要人生階段，標明起訖日期；
+11. 三至六個過往事件待驗證時間窗；
+12. 證據索引、不確定性及可向命主追問的驗證問題。
+
+每一大段優先列出直接依據，例如星體、宮位、分盤、大運路徑、important_rule_facts 或 evidence IDs。若結論涉及 sensitivity.changed，必須降低語氣強度並明示不確定性。
+
+## 過往事件驗證規則
+
+每個時間窗都要列出日期區間、相對應的大運／次運或規則證據、最可能的事件主題及至少一種替代可能。只能使用「可能」「較容易」「值得核對」等措辭，不得聲稱事件已確定發生，也不得利用未提供的人生經歷迎合結果。
+
+## 安全與表述
+
+避免奉承、恐嚇、宿命論及必然事件。占星是傳統象徵框架，不是經科學驗證的人格診斷或預測工具。健康、財務、法律與關係內容不得取代合格專業意見；不得診斷疾病、建議停藥、保證獲利，或斷言死亡、重病、離婚、犯罪與破產。
+
+## 完成前檢查
+
+確認所有精確數字都能回指附帶 JSON；已反映 warnings 與 sensitivity；三類資訊已明確區分；事件驗證均標為假設；沒有自行重算星盤。
+
+## BVR-Star 完整計算結果
+`;
+  return `${instructions}\n\n${JSON.stringify(currentResult, null, 2)}`;
 }
 
 async function writeClipboard(text) {
@@ -246,9 +283,9 @@ async function copyForAi() {
   copyButton.disabled = true;
   try {
     await writeClipboard(aiPromptText());
-    copyStatus.textContent = "已複製，可以直接貼到你慣用的 AI。";
+    copyStatus.textContent = "完整 Prompt 已複製，可直接貼到全新的 AI 對話。";
   } catch {
-    copyStatus.textContent = "瀏覽器無法自動複製，請展開技術資料並手動複製。";
+    copyStatus.textContent = "瀏覽器無法自動複製，請展開完整 Prompt 並手動複製。";
   } finally {
     copyButton.disabled = false;
   }
@@ -275,6 +312,7 @@ function resetForm() {
   advancedSettings.open = false;
   summaryList.replaceChildren();
   warningList.replaceChildren();
+  aiPromptPreview.textContent = "";
   technicalJson.textContent = "";
   copyStatus.textContent = "";
   clearFormStatus();
