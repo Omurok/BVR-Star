@@ -21,6 +21,7 @@ dependencies = [
   "geopy==2.5.0",
   "pydantic==2.13.4",
   "pyswisseph==2.10.3.2",
+  "redis==8.1.0",
   "timezonefinder==8.2.5",
   "typer==0.27.1",
   "tzdata==2026.3",
@@ -28,7 +29,7 @@ dependencies = [
 ]
 
 [dependency-groups]
-dev = ["httpx", "mypy", "ruff"]
+dev = ["httpx", "mypy", "pytest", "ruff"]
 
 [project.scripts]
 bvr-star = "bvr_star.cli:app"

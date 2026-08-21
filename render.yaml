@@ -14,3 +14,17 @@ services:
         value: "5"
       - key: BVR_MAX_BODY_BYTES
         value: "16384"
+      - key: BVR_GEOCODER_CACHE_URL
+        fromService:
+          name: bvr-star-cache
+          type: keyvalue
+          property: connectionString
+      - key: BVR_GEOCODER_CACHE_TTL_SECONDS
+        value: "2592000"
+
+  - type: keyvalue
+    name: bvr-star-cache
+    plan: free
+    region: oregon
+    ipAllowList: []
+    maxmemoryPolicy: allkeys-lru

@@ -101,6 +101,12 @@ uv run bvr-star calculate --input examples/chart-request.json
 BVR_EPHE_PATH=ephe uv run bvr-star serve --host 0.0.0.0 --port 8000
 ```
 
+### 地址解析快取
+
+地址解析只快取 `normalized place → geocoding candidates`，不保存完整出生 request、出生日期、出生時間或 IP。未設定 `BVR_GEOCODER_CACHE_URL` 時，服務使用程序內記憶體快取；設定 Redis 相容的 URL 後，會改用共享 Key Value 快取。`BVR_GEOCODER_CACHE_TTL_SECONDS` 預設為 30 天。
+
+Render Blueprint 會建立 `bvr-star-cache` Key Value，並自動注入 `BVR_GEOCODER_CACHE_URL`。Free Key Value 的資料可在重啟後消失，這只會造成 cache miss，服務會重新解析地址。
+
 Python：
 
 ```python

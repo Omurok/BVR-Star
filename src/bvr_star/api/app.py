@@ -39,8 +39,8 @@ app.add_middleware(
     CORSMiddleware, allow_origins=["*"], allow_methods=["GET", "POST"],
     allow_headers=["Content-Type", "Accept"], allow_credentials=False,
 )
-service = ChartService()
 geocoder = NominatimGeocoder()
+service = ChartService(geocoder=geocoder)
 _buckets: dict[tuple[str, str], deque[float]] = defaultdict(deque)
 _bucket_lock = Lock()
 
