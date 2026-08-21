@@ -6,6 +6,8 @@
 
 向使用者取得：出生日期、出生地當地時間、出生地、時間準確度（分鐘），以及報告參考日期。若出生時間未知，保留 `time` 為空，不得自行假設 12:00。除非使用者指定人物關係，全文一律稱盤主為「命主」，不要假定命主就是帳號持有人。
 
+取得出生地後，先用可查證的地圖或地理資料將其正規化，找出緯度、經度與 IANA 時區（例如 `Asia/Taipei`）。若同名地點有多個候選，先請使用者確認，不得猜測。只需查 IANA 時區名稱；出生當年的歷史 UTC offset 與夏令時間由 BVR-Star 計算，AI 不自行換算。
+
 ## 2. 呼叫 BVR-Star
 
 若你能發送 HTTP POST，優先呼叫完整公開 API：
@@ -20,6 +22,9 @@ Content-Type 為 `application/json`，本文格式：
     "date": "1983-06-15",
     "time": "03:58:00",
     "place": "Lingya District, Kaohsiung City, Taiwan",
+    "latitude": 22.62177,
+    "longitude": 120.312347,
+    "timezone": "Asia/Taipei",
     "time_accuracy_minutes": 0
   },
   "settings": {"profile": "bvr_raman_v1"},
@@ -35,17 +40,19 @@ Content-Type 為 `application/json`，本文格式：
 若目前只有一般網頁讀取／搜尋工具，不能發送 POST，改用 AI 專用 GET 入口。先將每個參數作 URL encoding，再開啟：
 
 ```text
-https://bvr-star.onrender.com/v1/charts/ai-context?birth_date=1983-06-15&birth_time=03%3A58%3A00&place=Lingya%20District%2C%20Kaohsiung%20City%2C%20Taiwan&time_accuracy_minutes=0&reference_date=2026-08-21
+https://bvr-star.onrender.com/v1/charts/ai-context?birth_date=1983-06-15&birth_time=03%3A58%3A00&place=Lingya%20District%2C%20Kaohsiung%2C%20Taiwan&latitude=22.62177&longitude=120.312347&timezone=Asia%2FTaipei&time_accuracy_minutes=0&reference_date=2026-08-21
 ```
 
 GET 參數：
 
 - `birth_date`：必填，`YYYY-MM-DD`
 - `birth_time`：當地時間，`HH:mm` 或 `HH:mm:ss`；不知道時間時省略
-- `place`：出生地，建議包含行政區、城市與國家
+- `place`：正規化後的出生地標籤，建議包含行政區、城市與國家
+- `latitude`、`longitude`：AI 查證後的出生地座標
+- `timezone`：AI 查證後的 IANA 時區，例如 `Asia/Taipei`
 - `time_accuracy_minutes`：時間誤差分鐘數，預設 0
 - `reference_date`：報告參考日期，建議明確傳入
-- 已知精確資料時，可用 `latitude`、`longitude`、`timezone` 取代地址解析；三者必須一起傳入
+- GET 工作流程預設傳入 `latitude`、`longitude`、`timezone`，三者必須一起提供；這可避免地址供應商的語言與同名地點歧義
 
 GET 回應的 `llm_context` 已包含 D1、全部支援分盤的精簡落點、大運時間線、規則證據、敏感度與警告。只能在成功取得 JSON 後開始解讀。若得到 405，代表錯用了 `/v1/charts/calculate`；網頁工具應改用 `/v1/charts/ai-context`。
 
@@ -55,7 +62,7 @@ GET 回應的 `llm_context` 已包含 D1、全部支援分盤的精簡落點、�
 
 `bvr-star calculate --input INPUT.json`
 
-地址解析若回傳 `LOCATION_AMBIGUOUS`，向使用者呈現候選地點，取得確認後改傳明確的 `latitude`、`longitude` 與 IANA `timezone`。民用時間若回傳重疊錯誤，向使用者確認 `fold`。不要猜測。
+地點查證若出現同名候選，向使用者呈現候選地點，取得確認後再傳明確的 `latitude`、`longitude` 與 IANA `timezone`。民用時間若回傳重疊錯誤，向使用者確認 `fold`。不要猜測。
 
 ## 3. 資料使用規則
 
