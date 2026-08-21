@@ -1,0 +1,12 @@
+{
+  "birth": {
+    "date": "1983-06-15",
+    "place": "Kaohsiung, Taiwan",
+    "latitude": 22.6265,
+    "longitude": 120.312,
+    "timezone": "Asia/Taipei"
+  },
+  "options": {
+    "output_language": "zh-TW"
+  }
+}

@@ -1,0 +1,22 @@
+name: CI
+
+on:
+  push:
+  pull_request:
+
+jobs:
+  verify:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+          cache: pip
+      - run: python -m pip install .
+      - run: python scripts/fetch_ephemeris.py --output ephe
+      - run: python -m compileall -q src
+      - run: BVR_EPHE_PATH=ephe bvr-star calculate --input examples/chart-request.json --output /tmp/chart.json
+      - run: python -c "import json; d=json.load(open('/tmp/chart.json')); assert d['mode']=='complete' and d['provenance']['ephemeris_source']=='swiss_ephemeris'"
+      - run: pip install build && python -m build
+      - run: docker build -t bvr-star .

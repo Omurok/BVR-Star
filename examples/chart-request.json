@@ -1,0 +1,20 @@
+{
+  "birth": {
+    "date": "1983-06-15",
+    "time": "03:58:00",
+    "place": "Lingya District, Kaohsiung City, Taiwan",
+    "latitude": 22.6265,
+    "longitude": 120.312,
+    "timezone": "Asia/Taipei",
+    "time_accuracy_minutes": 0
+  },
+  "settings": {
+    "profile": "bvr_raman_v1"
+  },
+  "options": {
+    "include": ["full", "llm_context"],
+    "dasha_depth": 3,
+    "reference_date": "2026-08-21",
+    "output_language": "zh-TW"
+  }
+}

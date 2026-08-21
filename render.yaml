@@ -1,0 +1,16 @@
+services:
+  - type: web
+    name: bvr-star
+    runtime: docker
+    plan: free
+    branch: main
+    dockerfilePath: ./Dockerfile
+    healthCheckPath: /health
+    autoDeploy: true
+    envVars:
+      - key: BVR_CHART_RATE
+        value: "30"
+      - key: BVR_GEOCODE_RATE
+        value: "5"
+      - key: BVR_MAX_BODY_BYTES
+        value: "16384"

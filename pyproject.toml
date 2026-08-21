@@ -1,0 +1,56 @@
+[build-system]
+requires = ["hatchling"]
+build-backend = "hatchling.build"
+
+[project]
+name = "bvr-star"
+version = "0.1.0"
+description = "Deterministic B. V. Raman-style Vedic astrology calculation engine"
+readme = "README.md"
+requires-python = ">=3.11,<3.12"
+license = "AGPL-3.0-or-later"
+authors = [{ name = "Omurok" }]
+keywords = ["vedic-astrology", "jyotish", "swiss-ephemeris", "raman-ayanamsha"]
+classifiers = [
+  "Development Status :: 3 - Alpha",
+  "License :: OSI Approved :: GNU Affero General Public License v3 or later (AGPLv3+)",
+  "Programming Language :: Python :: 3.11",
+]
+dependencies = [
+  "fastapi==0.141.1",
+  "geopy==2.5.0",
+  "pydantic==2.13.4",
+  "pyswisseph==2.10.3.2",
+  "timezonefinder==8.2.5",
+  "typer==0.27.1",
+  "tzdata==2026.3",
+  "uvicorn[standard]==0.52.4",
+]
+
+[dependency-groups]
+dev = ["httpx", "mypy", "ruff"]
+
+[project.scripts]
+bvr-star = "bvr_star.cli:app"
+
+[project.urls]
+Homepage = "https://github.com/Omurok/BVR-Star"
+Repository = "https://github.com/Omurok/BVR-Star"
+
+[tool.hatch.build.targets.wheel]
+packages = ["src/bvr_star"]
+
+[tool.hatch.build.targets.wheel.force-include]
+"prompts" = "bvr_star/prompt_templates"
+
+[tool.ruff]
+line-length = 240
+target-version = "py311"
+
+[tool.ruff.lint]
+select = ["E", "F", "I", "UP", "B", "SIM"]
+
+[tool.mypy]
+python_version = "3.11"
+strict = true
+plugins = ["pydantic.mypy"]
