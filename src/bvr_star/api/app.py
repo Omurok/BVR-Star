@@ -8,15 +8,17 @@ import uuid
 from collections import defaultdict, deque
 from datetime import date
 from datetime import time as civil_time
+from importlib import resources
 from threading import Lock
 from typing import Annotated
 
 from fastapi import FastAPI, Query, Request
 from fastapi.exceptions import RequestValidationError
 from fastapi.middleware.cors import CORSMiddleware
-from fastapi.responses import JSONResponse, PlainTextResponse
+from fastapi.responses import HTMLResponse, JSONResponse, PlainTextResponse, Response
 from starlette.concurrency import run_in_threadpool
 
+from bvr_star.api.action import ActionChartRequest, compact_ai_result
 from bvr_star.config import public_config
 from bvr_star.location.nominatim import NominatimGeocoder
 from bvr_star.location.resolve import resolve_location
@@ -40,6 +42,12 @@ service = ChartService()
 geocoder = NominatimGeocoder()
 _buckets: dict[tuple[str, str], deque[float]] = defaultdict(deque)
 _bucket_lock = Lock()
+
+
+def _asset_text(*parts: str) -> str:
+    """Read a UTF-8 asset packaged inside the installed bvr_star wheel."""
+
+    return resources.files("bvr_star").joinpath(*parts).read_text(encoding="utf-8")
 
 
 def _error(code: str, message: str, details=None, status: int = 422, request_id: str | None = None) -> JSONResponse:
@@ -90,6 +98,37 @@ def health():
     return JSONResponse(status_code=200 if ready else 503, content=content)
 
 
+@app.get("/", response_class=HTMLResponse, include_in_schema=False)
+def public_form():
+    return _asset_text("web", "index.html")
+
+
+@app.get("/privacy", response_class=HTMLResponse, include_in_schema=False)
+def privacy_policy():
+    return _asset_text("web", "privacy.html")
+
+
+@app.get("/assets/app.css", include_in_schema=False)
+def public_styles():
+    return Response(_asset_text("web", "app.css"), media_type="text/css; charset=utf-8")
+
+
+@app.get("/assets/app.js", include_in_schema=False)
+def public_script():
+    return Response(
+        _asset_text("web", "app.js"),
+        media_type="application/javascript; charset=utf-8",
+    )
+
+
+@app.get("/gpt/action-openapi.yaml", include_in_schema=False)
+def gpt_action_schema():
+    return Response(
+        _asset_text("gpt_assets", "action-openapi.yaml"),
+        media_type="application/yaml; charset=utf-8",
+    )
+
+
 @app.get("/v1/config", tags=["service"])
 def config():
     return public_config()
@@ -110,6 +149,20 @@ async def calculate_chart(payload: ChartRequest, request: Request):
         return _error("RATE_LIMIT_EXCEEDED", "Chart rate limit exceeded.", status=429)
     result = await run_in_threadpool(service.calculate, payload)
     return result.model_dump(mode="json")
+
+
+@app.post(
+    "/v1/actions/calculate",
+    tags=["actions"],
+    operation_id="calculateBvrChart",
+    summary="Calculate a BVR-Star chart for AI interpretation",
+)
+async def calculate_action_chart(payload: ActionChartRequest, request: Request):
+    client = request.client.host if request.client else "unknown"
+    if not _allow(client, "chart", int(os.getenv("BVR_CHART_RATE", "30"))):
+        return _error("RATE_LIMIT_EXCEEDED", "Chart rate limit exceeded.", status=429)
+    result = await run_in_threadpool(service.calculate, payload.to_chart_request())
+    return compact_ai_result(result)
 
 
 @app.get(
@@ -171,26 +224,15 @@ async def calculate_ai_context(
     )
     payload = ChartRequest(birth=birth, options=options)
     result = await run_in_threadpool(service.calculate, payload)
-    data = result.model_dump(mode="json")
-    return {
-        "schema_version": data["schema_version"],
-        "mode": data["mode"],
-        "provenance": data["provenance"],
-        "location": data["location"],
-        "time": data["time"],
-        "llm_context": data["llm_context"],
-        "warnings": [
-            "GET_QUERY_CONTAINS_BIRTH_DATA",
-            *data["warnings"],
-        ],
-        "data_handling": {
-            "application_storage": "BVR-Star does not persist the request or response.",
-            "url_privacy": (
-                "GET query parameters can remain in browser history and network infrastructure logs. "
-                "Use POST /v1/charts/calculate when privacy matters."
-            ),
-        },
-    }
+    compact = compact_ai_result(
+        result,
+        extra_warnings=["GET_QUERY_CONTAINS_BIRTH_DATA"],
+    )
+    compact["data_handling"]["url_privacy"] = (
+        "GET query parameters can remain in browser history and network infrastructure logs. "
+        "Use POST /v1/charts/calculate when privacy matters."
+    )
+    return compact
 
 
 @app.get("/v1/prompts/full-reading", response_class=PlainTextResponse, tags=["prompts"])
