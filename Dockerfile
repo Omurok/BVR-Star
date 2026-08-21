@@ -7,6 +7,7 @@ WORKDIR /build
 COPY pyproject.toml README.md LICENSE ./
 COPY src ./src
 COPY prompts ./prompts
+COPY gpt ./gpt
 RUN pip wheel --wheel-dir /wheels .
 
 FROM python:3.11-slim
