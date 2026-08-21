@@ -1,0 +1,187 @@
+openapi: 3.1.0
+info:
+  title: BVR-Star Chart Action
+  version: 1.0.0
+  description: >-
+    Calculates deterministic B. V. Raman-style sidereal Jyotish chart data.
+    The service returns computed facts for an AI to interpret; it does not
+    generate an astrology reading or persist the request in an application database.
+servers:
+  - url: https://bvr-star.onrender.com
+paths:
+  /v1/actions/calculate:
+    post:
+      operationId: calculateBvrChart
+      summary: Calculate an Indian astrology chart for AI interpretation
+      description: >-
+        Send the person's local civil birth date, optional local birth time, and
+        birthplace. If latitude and longitude are supplied, an IANA timezone such
+        as Asia/Taipei must be supplied with them. Omit all three coordinates and
+        timezone to let BVR-Star resolve the birthplace.
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/ActionChartRequest'
+      responses:
+        '200':
+          description: Compact calculated chart facts ready for AI interpretation
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ActionChartResponse'
+        '422':
+          description: Missing, invalid, or ambiguous birth data
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '429':
+          description: Public rate limit reached
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '503':
+          description: Geocoder or ephemeris service temporarily unavailable
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+components:
+  schemas:
+    ActionChartRequest:
+      type: object
+      additionalProperties: false
+      required:
+        - birth_date
+        - birth_place
+      properties:
+        birth_date:
+          type: string
+          format: date
+          description: Local civil birth date in YYYY-MM-DD format.
+          example: '1983-06-15'
+        birth_time:
+          type:
+            - string
+            - 'null'
+          format: time
+          description: >-
+            Local civil birth time in HH:MM or HH:MM:SS format. Omit when the
+            birth time is genuinely unknown; the response will omit time-sensitive fields.
+          example: '03:58:00'
+        birth_place:
+          type: string
+          minLength: 2
+          maxLength: 500
+          description: Precise district, city, and country in ordinary language.
+          example: Lingya District, Kaohsiung City, Taiwan
+        latitude:
+          type:
+            - number
+            - 'null'
+          minimum: -90
+          maximum: 90
+          description: Verified latitude. Supply only with longitude and timezone.
+          example: 22.62177
+        longitude:
+          type:
+            - number
+            - 'null'
+          minimum: -180
+          maximum: 180
+          description: Verified longitude. Supply only with latitude and timezone.
+          example: 120.312347
+        timezone:
+          type:
+            - string
+            - 'null'
+          minLength: 3
+          maxLength: 100
+          description: Verified IANA timezone. Supply only with latitude and longitude.
+          example: Asia/Taipei
+        time_accuracy_minutes:
+          type: integer
+          minimum: 0
+          maximum: 720
+          default: 0
+          description: Estimated plus-or-minus birth-time uncertainty in minutes.
+        reference_date:
+          type:
+            - string
+            - 'null'
+          format: date
+          description: Date used to identify active Vimshottari periods. Defaults to today.
+        output_language:
+          type: string
+          enum:
+            - zh-TW
+          default: zh-TW
+          description: Language of human-readable labels in the returned context.
+    ActionChartResponse:
+      type: object
+      additionalProperties: false
+      required:
+        - schema_version
+        - mode
+        - provenance
+        - location
+        - time
+        - llm_context
+        - warnings
+        - data_handling
+      properties:
+        schema_version:
+          type: string
+        mode:
+          type: string
+          enum:
+            - complete
+            - date_range
+        provenance:
+          type: object
+          additionalProperties: true
+        location:
+          type: object
+          additionalProperties: true
+        time:
+          type: object
+          additionalProperties: true
+        llm_context:
+          type: object
+          additionalProperties: true
+          description: Sole calculated chart facts the GPT may interpret.
+        warnings:
+          type: array
+          items:
+            type: string
+        data_handling:
+          type: object
+          additionalProperties:
+            type: string
+    ErrorResponse:
+      type: object
+      additionalProperties: false
+      required:
+        - error
+      properties:
+        error:
+          type: object
+          additionalProperties: true
+          required:
+            - code
+            - message
+          properties:
+            code:
+              type: string
+            message:
+              type: string
+            details:
+              type: object
+              additionalProperties: true
+            request_id:
+              type:
+                - string
+                - 'null'
