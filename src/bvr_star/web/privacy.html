@@ -1,0 +1,70 @@
+<!doctype html>
+<html lang="zh-Hant-TW">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="description" content="BVR-Star 公開計算服務的資料與隱私說明。">
+  <title>隱私政策｜BVR-Star</title>
+  <link rel="stylesheet" href="/assets/app.css">
+</head>
+<body>
+  <a class="skip-link" href="#main">跳到主要內容</a>
+  <header class="site-header">
+    <a class="brand" href="/">BVR-Star</a>
+    <nav aria-label="主要導覽">
+      <a href="/">計算星盤</a>
+      <a href="/docs">API 文件</a>
+      <a href="https://github.com/Omurok/BVR-Star" rel="noreferrer">GitHub</a>
+    </nav>
+  </header>
+
+  <main class="policy-page" id="main">
+    <header>
+      <h1>隱私與資料處理</h1>
+      <p>BVR-Star 的工作是計算星盤角度與結構，不是在網站內產生 AI 解讀。</p>
+    </header>
+
+    <section>
+      <h2>我們的應用程式不保存什麼</h2>
+      <p>BVR-Star 不建立使用者帳號，也不把你提交的出生資料或計算結果寫入應用程式資料庫。網站不使用分析追蹤、廣告追蹤、Local Storage、Session Storage 或行銷 Cookie。</p>
+    </section>
+
+    <section>
+      <h2>表單如何傳送資料</h2>
+      <p>首頁表單使用 HTTPS POST 將出生資料傳到同一個 BVR-Star 服務，因此資料不會出現在網址或一般瀏覽器歷史中。為相容只能讀取 GET 網址的工具，API 另有 GET 入口；使用該入口時，出生資料會出現在網址，隱私性較低。</p>
+    </section>
+
+    <section>
+      <h2>基礎設施與網路紀錄</h2>
+      <p>即使 BVR-Star 應用程式不建立星盤資料庫，Render 等代管平台、網路服務商或安全設備仍可能依各自政策保留連線日誌，例如請求時間、IP 位址或錯誤資訊。因此我們不宣稱整個網路傳輸過程「完全不留任何紀錄」。</p>
+    </section>
+
+    <section>
+      <h2>出生地解析</h2>
+      <p>如果只輸入地址，BVR-Star 會透過 OpenStreetMap Nominatim 解析地點，再由座標推導 IANA 時區。你也可以在進階設定直接提供經緯度與時區，以略過地址解析。</p>
+    </section>
+
+    <section>
+      <h2>你選擇的 AI 平台</h2>
+      <p>BVR-Star 網頁不呼叫 OpenAI、Claude、Gemini 或其他語言模型。當你按下「複製給 AI」並把資料貼到第三方平台，或透過自訂 GPT Action 使用本服務時，該平台如何保存及處理對話，應以該平台的隱私政策與帳號設定為準。</p>
+    </section>
+
+    <section>
+      <h2>占星內容的界線</h2>
+      <p>占星是傳統象徵框架，並非經科學驗證的人格診斷或事件預測方式。健康、法律與財務相關解讀不應取代合格專業人員的意見。</p>
+    </section>
+
+    <p class="policy-updated">本頁最後更新：2026-08-21</p>
+    <a class="primary-button policy-home" href="/">回到星盤計算</a>
+  </main>
+
+  <footer class="site-footer">
+    <nav aria-label="頁尾導覽">
+      <a href="/">計算星盤</a>
+      <a href="/docs">API 文件</a>
+      <a href="https://github.com/Omurok/BVR-Star" rel="noreferrer">GitHub</a>
+    </nav>
+    <p>開源程式碼採 AGPL-3.0-or-later 授權。</p>
+  </footer>
+</body>
+</html>

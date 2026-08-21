@@ -1,0 +1,169 @@
+<!doctype html>
+<html lang="zh-Hant-TW">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="description" content="輸入出生日期、時間與地點，由 BVR-Star 先完成 Raman 印度星盤計算，再交給你選擇的 AI 解讀。">
+  <title>BVR-Star｜先把印度星盤算準</title>
+  <link rel="stylesheet" href="/assets/app.css">
+  <script src="/assets/app.js" defer></script>
+</head>
+<body>
+  <a class="skip-link" href="#main">跳到主要內容</a>
+  <header class="site-header">
+    <a class="brand" href="/" aria-label="BVR-Star 首頁">BVR-Star</a>
+    <nav aria-label="主要導覽">
+      <a href="#how-it-works">使用說明</a>
+      <a href="/docs">API 文件</a>
+      <a href="https://github.com/Omurok/BVR-Star" rel="noreferrer">GitHub</a>
+      <a href="/privacy">隱私政策</a>
+    </nav>
+  </header>
+
+  <main id="main">
+    <section class="intake-shell" id="intakeSection" aria-labelledby="intakeHeading">
+      <div class="intro-panel">
+        <div class="orbital-lines" aria-hidden="true"></div>
+        <h1 id="intakeHeading">輸入出生資料，<br>先把星盤算準</h1>
+        <span class="amber-rule" aria-hidden="true"></span>
+        <p class="intro-copy">程式負責計算，AI 負責解讀。網站不會替你產生 AI 報告，也不會把出生資料存入資料庫。</p>
+        <ul class="trust-list" aria-label="資料處理說明">
+          <li>
+            <span class="trust-icon" aria-hidden="true">↓</span>
+            <span>資料以 POST 傳送，不會出現在網址中。</span>
+          </li>
+          <li>
+            <span class="trust-icon" aria-hidden="true">✓</span>
+            <span>本網站不儲存你的出生資料。</span>
+          </li>
+        </ul>
+      </div>
+
+      <div class="form-panel">
+        <form id="chartForm" novalidate>
+          <div class="field-row">
+            <label for="birthDate">出生日期</label>
+            <div class="field-control">
+              <input id="birthDate" name="birthDate" type="date" min="1900-01-01" max="2099-12-31" required autocomplete="bday">
+            </div>
+          </div>
+
+          <div class="field-row">
+            <label for="birthTime">出生時間</label>
+            <div class="field-control">
+              <input id="birthTime" name="birthTime" type="time" step="1" autocomplete="off">
+              <p class="field-help">不知道時間可留空，但上升、宮位與大運將省略。</p>
+            </div>
+          </div>
+
+          <div class="field-row">
+            <label for="birthPlace">出生地</label>
+            <div class="field-control">
+              <input id="birthPlace" name="birthPlace" type="text" minlength="2" maxlength="500" placeholder="例如：台灣高雄市苓雅區" required autocomplete="off">
+              <p class="field-help">請盡量填入行政區、城市與國家，系統會自動取得座標。</p>
+            </div>
+          </div>
+
+          <details class="advanced" id="advancedSettings">
+            <summary>進階設定</summary>
+            <div class="advanced-fields">
+              <div class="compact-field">
+                <label for="timeAccuracy">出生時間可能誤差（分鐘）</label>
+                <input id="timeAccuracy" name="timeAccuracy" type="number" min="0" max="720" value="0" inputmode="numeric">
+              </div>
+              <div class="compact-field">
+                <label for="referenceDate">大運參考日期</label>
+                <input id="referenceDate" name="referenceDate" type="date">
+              </div>
+              <div class="compact-field">
+                <label for="latitude">緯度</label>
+                <input id="latitude" name="latitude" type="number" min="-90" max="90" step="any" inputmode="decimal" placeholder="22.62177">
+              </div>
+              <div class="compact-field">
+                <label for="longitude">經度</label>
+                <input id="longitude" name="longitude" type="number" min="-180" max="180" step="any" inputmode="decimal" placeholder="120.312347">
+              </div>
+              <div class="compact-field compact-field-wide">
+                <label for="timezone">IANA 時區</label>
+                <input id="timezone" name="timezone" type="text" maxlength="100" placeholder="Asia/Taipei" autocomplete="off">
+                <p class="field-help">經緯度與時區必須三項一起填；不知道可全部留空。</p>
+              </div>
+            </div>
+          </details>
+
+          <button class="primary-button" id="submitButton" type="submit">開始計算</button>
+          <p class="form-note">提交後將在本頁顯示計算結果，供你複製給 AI 解讀。</p>
+          <p class="form-status" id="formStatus" role="status" aria-live="polite"></p>
+        </form>
+      </div>
+    </section>
+
+    <section class="result-shell" id="resultSection" aria-labelledby="resultHeading" hidden>
+      <header class="result-header">
+        <div>
+          <h1 id="resultHeading" tabindex="-1">星盤資料已計算完成</h1>
+          <p>以下是程式計算結果，還不是 AI 解讀。</p>
+        </div>
+        <div class="result-orbit" aria-hidden="true"></div>
+      </header>
+
+      <dl class="summary-list" id="summaryList"></dl>
+
+      <p class="success-message" id="successMessage">
+        <span aria-hidden="true">✓</span>
+        <span>星盤資料已成功計算。</span>
+      </p>
+
+      <div class="result-actions">
+        <button class="primary-button copy-button" id="copyButton" type="button">
+          <svg viewBox="0 0 24 24" aria-hidden="true"><rect x="8" y="8" width="12" height="12" rx="2"></rect><path d="M16 8V6a2 2 0 0 0-2-2H6a2 2 0 0 0-2 2v8a2 2 0 0 0 2 2h2"></path></svg>
+          複製給 AI
+        </button>
+        <button class="secondary-button" id="downloadButton" type="button">
+          <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 3v12"></path><path d="m7 10 5 5 5-5"></path><path d="M5 21h14"></path></svg>
+          下載完整 JSON
+        </button>
+        <button class="text-button" id="resetButton" type="button">重新輸入 <span aria-hidden="true">→</span></button>
+      </div>
+      <p class="copy-status" id="copyStatus" role="status" aria-live="polite"></p>
+
+      <details class="technical-details">
+        <summary>查看技術資料</summary>
+        <pre id="technicalJson" tabindex="0"></pre>
+      </details>
+
+      <section class="next-step" aria-labelledby="nextStepHeading">
+        <h2 id="nextStepHeading"><span aria-hidden="true">1</span>接下來怎麼做？</h2>
+        <p>按下「複製給 AI」，再貼到你慣用的 ChatGPT、Claude 或 Gemini。模型只負責解讀，不會重新計算星盤。</p>
+      </section>
+
+      <aside class="warning-panel" id="warningPanel" aria-labelledby="warningHeading" hidden>
+        <div class="warning-icon" aria-hidden="true">!</div>
+        <div>
+          <h2 id="warningHeading">計算提醒</h2>
+          <ul id="warningList"></ul>
+        </div>
+      </aside>
+    </section>
+
+    <section class="steps" id="how-it-works" aria-labelledby="stepsHeading">
+      <h2 id="stepsHeading">三步驟完成</h2>
+      <ol>
+        <li><span>1</span><div><h3>輸入資料</h3><p>填寫出生日期、時間（可留空）與出生地。</p></div></li>
+        <li><span>2</span><div><h3>程式計算</h3><p>依 B. V. Raman 方法產生可稽核的星盤數據。</p></div></li>
+        <li><span>3</span><div><h3>複製給 AI</h3><p>把計算結果貼到你選擇的模型進行解讀。</p></div></li>
+      </ol>
+    </section>
+  </main>
+
+  <footer class="site-footer">
+    <nav aria-label="頁尾導覽">
+      <a href="#how-it-works">使用說明</a>
+      <a href="/docs">API 文件</a>
+      <a href="https://github.com/Omurok/BVR-Star" rel="noreferrer">GitHub</a>
+      <a href="/privacy">隱私政策</a>
+    </nav>
+    <p>占星是傳統象徵系統，不是科學、醫療、法律或財務診斷。</p>
+  </footer>
+</body>
+</html>
