@@ -1,121 +1,121 @@
-# BVR-Star Design Specification
+# BVR-Star 設計規格
 
-Date: 2026-08-21  
-Status: awaiting user review  
-Repository target: `https://github.com/Omurok/BVR-Star`
+日期：2026-08-21
+狀態：等待使用者審閱
+目標儲存庫：`https://github.com/Omurok/BVR-Star`
 
-## 1. Purpose
+## 1. 專案目的
 
-BVR-Star is an open-source, deterministic Vedic astrology calculation engine. It accepts a birth date, birth time, and birthplace, normalizes the civil time and location, calculates a sidereal chart with explicit conventions, and returns traceable JSON for human or language-model interpretation.
+BVR-Star 是一套開源、具確定性且可重複驗算的印度占星計算引擎。它接收出生日期、出生時間與出生地，將民用時間和地理位置標準化，依明確指定的計算慣例建立恆星黃道星盤，並輸出可追溯的 JSON，供人類或語言模型解讀。
 
-The project separates three concerns:
+本專案將三類工作分開處理：
 
-1. Astronomical facts and mathematical transformations produced by code.
-2. Versioned Jyotish rules produced by a traceable rule engine.
-3. Narrative interpretation produced outside the calculation engine by an AI or human astrologer.
+1. 由程式產生的天文事實與數學轉換。
+2. 由可版本化規則引擎產生的印度占星規則。
+3. 由外部 AI 或人類占星師完成的敘事性解讀。
 
-The primary default profile follows the conventions used in the referenced B. V. Raman-style analysis:
+主要預設設定檔遵循本次 B. V. Raman 取向分析使用的慣例：
 
-- sidereal zodiac;
-- Raman ayanamsha;
-- geocentric planetary positions;
-- mean lunar nodes;
-- Parashari whole-sign houses and graha aspects;
-- Vimshottari dasha.
+- 恆星黃道；
+- Raman Ayanāṃśa；
+- 地心行星位置；
+- 平均月交點；
+- Parāśari 整宮制與行星相位；
+- Vimshottari 大運。
 
-The system does not claim that astrological interpretations are scientifically validated. It exposes the calculation convention and evidence for every derived rule so an interpretation can distinguish calculation from inference.
+本系統不宣稱占星解讀已獲科學驗證。每項衍生規則都會公開其計算慣例與證據，使後續解讀能清楚區分「計算結果」與「詮釋推論」。
 
-## 2. Goals
+## 2. 專案目標
 
-Version 1 must provide:
+第一版必須提供：
 
-- a reusable Python library;
-- a command-line interface that writes machine-readable JSON;
-- a FastAPI HTTP service with a published OpenAPI schema;
-- a Docker image and Render deployment definition;
-- deterministic chart calculations with versioned configuration;
-- a compact `llm_context` projection optimized for language-model use;
-- Traditional Chinese and English AI prompt templates;
-- automated tests, including the agreed 1983 Kaohsiung reference chart;
-- public AGPL-3.0 source code at `Omurok/BVR-Star`;
-- a public, no-storage calculation API.
+- 可重複使用的 Python 函式庫；
+- 輸出機器可讀 JSON 的命令列介面；
+- 具公開 OpenAPI Schema 的 FastAPI HTTP 服務；
+- Docker 映像與 Render 部署設定；
+- 採用版本化設定、結果可重現的星盤計算；
+- 為語言模型最佳化的精簡 `llm_context`；
+- 繁體中文與英文 AI Prompt 範本；
+- 自動化測試，包括已確認的 1983 年高雄基準盤；
+- 公開於 `Omurok/BVR-Star`、採 AGPL-3.0 授權的原始碼；
+- 不保存使用者資料的公開計算 API。
 
-## 3. Non-goals for Version 1
+## 3. 第一版不包含的範圍
 
-Version 1 will not:
+第一版不會：
 
-- generate a supposedly objective life diagnosis inside the API;
-- claim that a predicted event certainly occurred;
-- perform birth-time rectification;
-- infer a missing birth time from prior conversation data;
-- include Shadbala, Ashtakavarga, Jaimini dasha, KP astrology, or Varshaphala;
-- provide user accounts, saved charts, billing, or a chart database;
-- promise an exhaustive catalog of every yoga found across all classical and modern sources;
-- guarantee low-latency availability on Render's free tier.
+- 在 API 內產生自稱客觀的人生診斷；
+- 宣稱推測事件必然已經發生；
+- 進行出生時間校正；
+- 從先前對話推測缺少的出生時間；
+- 納入 Shadbala、Ashtakavarga、Jaimini 大運、KP 占星或 Varshaphala；
+- 提供使用者帳號、星盤保存、收費或星盤資料庫；
+- 承諾收錄所有古典與現代來源中的全部 Yoga；
+- 保證 Render 免費方案具有低延遲或持續在線能力。
 
-These features can be added through separately versioned rule modules after the core chart contract is stable.
+上述功能可在核心星盤資料格式穩定後，以獨立且具版本編號的規則模組加入。
 
-## 4. Users and Main Flows
+## 4. 使用者與主要流程
 
-### 4.1 AI-assisted reading
+### 4.1 AI 輔助解讀
 
-An AI receives birth data, calls the public HTTP API or local CLI, receives a complete chart response, and follows a repository prompt to write a report. The AI treats `facts`, `rules`, `warnings`, and `sensitivity` as separate sources and never recalculates a degree from prose.
+AI 接收出生資料後，呼叫公開 HTTP API 或本機 CLI，取得完整星盤回應，再依儲存庫內的 Prompt 撰寫報告。AI 必須將 `facts`、`rules`、`warnings` 與 `sensitivity` 視為不同類型的資料來源，不得根據文字自行重算星體度數。
 
-### 4.2 Local calculation
+### 4.2 本機計算
 
-A user installs the Python package and runs:
+使用者安裝 Python 套件後執行：
 
 ```text
 bvr-star calculate --input birth.json --output chart.json
 ```
 
-The same calculation is available as a Python function:
+同一套計算也可透過 Python 函式使用：
 
 ```text
 calculate_chart(request: ChartRequest) -> ChartResponse
 ```
 
-### 4.3 Public API calculation
+### 4.3 公開 API 計算
 
-A client sends a `ChartRequest` to `POST /v1/charts/calculate` and receives the same `ChartResponse` contract used by the Python library and CLI.
+客戶端將 `ChartRequest` 傳送至 `POST /v1/charts/calculate`，並取得與 Python 函式庫及 CLI 相同格式的 `ChartResponse`。
 
-## 5. Architecture
+## 5. 系統架構
 
-The project uses one Python codebase with adapters around a pure calculation core:
+本專案以單一 Python 程式庫為核心，在純計算核心外建立不同使用介面：
 
 ```text
-Birth input
-  -> location resolution
-  -> historical civil-time normalization
-  -> Julian day and Swiss Ephemeris adapter
-  -> sidereal chart core
-  -> Jyotish derivation modules
-  -> full ChartResponse + compact llm_context
-  -> Python / CLI / HTTP adapters
+出生資料
+  -> 地點解析
+  -> 歷史民用時間標準化
+  -> 儒略日與 Swiss Ephemeris 介面
+  -> 恆星黃道星盤核心
+  -> 印度占星衍生模組
+  -> 完整 ChartResponse + 精簡 llm_context
+  -> Python / CLI / HTTP 介面
 ```
 
-The core must not import FastAPI, command-line parsing, Render, or prompt code. Network-dependent geocoding is behind an interface so the calculation core can be tested offline and exact coordinates can bypass geocoding.
+核心模組不得匯入 FastAPI、命令列參數解析、Render 或 Prompt 程式碼。需要網路的地理編碼必須置於抽象介面之後，使計算核心可以離線測試；使用者提供精確經緯度時，可完全略過地理編碼。
 
-### 5.1 Module boundaries
+### 5.1 模組邊界
 
-- `models`: validated request, response, warning, provenance, and error models.
-- `location`: geocoder interface, provider implementation, coordinate validation, and timezone lookup.
-- `time`: IANA timezone handling, ambiguous/nonexistent local time detection, UTC conversion, and Julian day preparation.
-- `ephemeris`: the only module that calls Swiss Ephemeris.
-- `chart`: signs, houses, ascendant, nakshatra, pada, and planetary placement.
-- `varga`: divisional chart calculations under a named rule-set version.
-- `dasha`: Vimshottari balance and nested period calculation.
-- `rules`: dignity, combustion, conjunction, Parashari aspect, lordship, and yoga evidence.
-- `sensitivity`: recalculation at birth-time uncertainty boundaries and structural comparison.
-- `llm`: token-efficient projection of calculation output; no narrative predictions.
-- `cli`: local command-line adapter.
-- `api`: FastAPI routes, HTTP error mapping, rate limiting, and OpenAPI metadata.
+- `models`：經驗證的請求、回應、警告、來源與錯誤模型。
+- `location`：地理編碼介面、供應商實作、座標驗證與時區查找。
+- `time`：IANA 時區、重疊或不存在時間偵測、UTC 轉換及儒略日前置處理。
+- `ephemeris`：唯一可以呼叫 Swiss Ephemeris 的模組。
+- `chart`：星座、宮位、上升、月宿、Pada 與行星落點。
+- `varga`：依指定規則集版本計算分盤。
+- `dasha`：Vimshottari 出生餘額與多層大運計算。
+- `rules`：尊貴狀態、燃燒、合相、Parāśari 相位、宮主與 Yoga 證據。
+- `sensitivity`：依出生時間誤差上下界重新計算並比較結構。
+- `llm`：節省 Token 的計算結果投影，不產生敘事性預測。
+- `cli`：本機命令列介面。
+- `api`：FastAPI 路由、HTTP 錯誤轉換、限流及 OpenAPI 資訊。
 
-Each module has one public boundary and can be tested without reading another module's internals.
+每個模組只有一個公開邊界，且不必讀取其他模組的內部實作即可測試。
 
-## 6. Input Contract
+## 6. 輸入格式
 
-The canonical JSON request is:
+標準 JSON 請求如下：
 
 ```json
 {
@@ -146,97 +146,97 @@ The canonical JSON request is:
 }
 ```
 
-Validation rules:
+驗證規則：
 
-- `date` is required.
-- Version 1 accepts civil dates from 1900-01-01 through 2099-12-31 and returns `DATE_OUT_OF_RANGE` otherwise.
-- `time` may be absent only for date-range mode.
-- A complete calculation requires either `place`, or all of `latitude`, `longitude`, and `timezone`.
-- Explicit coordinates and timezone take precedence over the address, and the response records that choice.
-- Latitude must be between -90 and 90; longitude must be between -180 and 180.
-- `time_accuracy_minutes` is zero or greater and is used only when a birth time is supplied.
-- `fold` is absent for ordinary local times and is `0` or `1` only when selecting one side of an overlapping daylight-saving transition.
-- `reference_date` defaults to the request date in UTC and selects the active dasha paths included in `llm_context`; it never changes the natal chart.
-- Unknown calculation settings are rejected rather than silently defaulted.
+- `date` 為必填欄位。
+- 第一版接受 1900-01-01 至 2099-12-31 的民用日期，超出範圍時回傳 `DATE_OUT_OF_RANGE`。
+- 只有在日期範圍模式中，`time` 才可以省略。
+- 完整計算必須提供 `place`，或同時提供 `latitude`、`longitude` 與 `timezone`。
+- 明確提供的經緯度與時區優先於地址，回應中必須記錄此項選擇。
+- 緯度必須介於 -90 至 90；經度必須介於 -180 至 180。
+- `time_accuracy_minutes` 必須大於或等於零，且僅在提供出生時間時使用。
+- 一般時間不提供 `fold`；遇到夏令時間回撥造成的重疊時間時，才以 `0` 或 `1` 選擇其中一次。
+- `reference_date` 預設為請求當下的 UTC 日期，只用於選取 `llm_context` 內的有效大運路徑，不會改變本命盤。
+- 不認識的計算設定直接拒絕，不得默默套用預設值。
 
-## 7. Location and Time Normalization
+## 7. 地點與時間標準化
 
-### 7.1 Address mode
+### 7.1 地址模式
 
-The default low-volume provider is OpenStreetMap Nominatim with an identifying user-agent, request throttling of at most one geocoding request per second per service instance, and a bounded cache. The provider is replaceable through configuration.
+低流量部署的預設供應商為 OpenStreetMap Nominatim，必須使用可識別的 User-Agent、每個服務實例每秒最多一次的地理編碼請求，以及有容量上限的快取。供應商必須可透過設定替換。
 
-If an address resolves to materially different candidate locations, the API returns `LOCATION_AMBIGUOUS` and the candidates. The client resubmits explicit coordinates and timezone or a more specific address. The service does not hide a low-confidence location choice.
+若同一地址解析出實質不同的候選地點，API 回傳 `LOCATION_AMBIGUOUS` 與候選清單。客戶端必須改用更精確的地址，或重新提交明確的經緯度與時區。服務不得隱藏低可信度的地點選擇。
 
-### 7.2 Coordinate mode
+### 7.2 座標模式
 
-The service derives an IANA timezone identifier from the coordinates unless the request supplies one. Historical UTC offset and daylight-saving behavior come from the IANA tz database through Python `zoneinfo` and the pinned `tzdata` package.
+除非請求已提供時區，服務會依經緯度取得 IANA 時區識別字。歷史 UTC 時差與夏令時間規則由 Python `zoneinfo` 和固定版本的 `tzdata` 套件讀取 IANA 時區資料庫。
 
-### 7.3 Civil-time edge cases
+### 7.3 民用時間邊界情況
 
-- A nonexistent local time returns `LOCAL_TIME_NONEXISTENT`.
-- An overlapping local time returns `LOCAL_TIME_AMBIGUOUS` and requires an explicit `fold` choice in a follow-up request.
-- The response records local time, IANA timezone, UTC offset, UTC instant, Julian day, location source, and data versions.
+- 不存在的當地時間回傳 `LOCAL_TIME_NONEXISTENT`。
+- 重疊的當地時間回傳 `LOCAL_TIME_AMBIGUOUS`，後續請求必須明確指定 `fold`。
+- 回應必須記錄當地時間、IANA 時區、UTC 時差、UTC 時刻、儒略日、地點來源及資料版本。
 
-### 7.4 Missing birth time
+### 7.4 缺少出生時間
 
-When `time` is absent, the response mode is `date_range`. The engine calculates the start and end of the local civil day, reports planetary longitude ranges and any sign or nakshatra transitions, and omits ascendant, houses, divisional ascendants, dasha balance, and other time-sensitive conclusions. It does not invent a noon birth time.
+若沒有 `time`，回應模式為 `date_range`。引擎計算當地民用日的起點與終點，回傳行星經度範圍，以及期間發生的星座或月宿跨界；上升、宮位、分盤上升、大運出生餘額及其他時間敏感結論一律省略。程式不得虛構中午出生時間。
 
-## 8. Calculation Conventions
+## 8. 計算慣例
 
-Every response contains the resolved convention profile. The `bvr_raman_v1` profile fixes:
+每次回應都必須包含解析後的完整慣例設定。`bvr_raman_v1` 固定使用：
 
-- Swiss Ephemeris sidereal flag;
-- Raman ayanamsha (`SE_SIDM_RAMAN`);
-- geocentric ecliptic longitude of date;
-- mean lunar node for Rahu, with Ketu exactly opposite;
-- whole-sign houses from the sidereal ascendant sign;
-- traditional Parashari graha aspects;
-- Vimshottari dasha using 365.25 days per dasha year;
-- divisional formulas registered as `parasari_shodashavarga_v1`.
+- Swiss Ephemeris 恆星黃道旗標；
+- Raman Ayanāṃśa（`SE_SIDM_RAMAN`）；
+- 當日黃道的地心黃經；
+- 以平均月交點計算 Rahu，Ketu 固定在正對面；
+- 以恆星黃道上升星座建立整宮制；
+- 傳統 Parāśari 行星相位；
+- Vimshottari 大運，每一大運年使用 365.25 日；
+- 註冊為 `parasari_shodashavarga_v1` 的分盤公式。
 
-The response records actual Swiss Ephemeris return flags. A fallback from Swiss ephemeris files to another calculation source is never silent: provenance reports the source and a warning is returned. The Docker deployment contains the pinned ephemeris data needed by supported dates.
+回應必須保存 Swiss Ephemeris 的實際回傳旗標。若程式從 Swiss Ephemeris 星曆檔退回其他計算來源，必須在來源資料中明確說明並回傳警告。Docker 部署必須包含支援日期範圍所需、版本固定的星曆資料。
 
-### 8.1 Calculated bodies and angles
+### 8.1 計算星體與角度
 
-Version 1 calculates:
+第一版計算：
 
-- Sun, Moon, Mercury, Venus, Mars, Jupiter, and Saturn;
-- mean Rahu and derived Ketu;
-- ascendant and MC when time is known.
+- 太陽、月亮、水星、金星、火星、木星及土星；
+- 平均 Rahu 與由其推導的 Ketu；
+- 出生時間已知時的上升與 MC。
 
-For each body, the response includes sidereal longitude, sign, sign degree, nakshatra, pada, longitude speed, retrograde state, house, and provenance.
+每顆星體的回應包含恆星黃經、星座、星座內度數、月宿、Pada、黃經速度、逆行狀態、宮位與計算來源。
 
-### 8.2 Divisional charts
+### 8.2 分盤
 
-Version 1 includes D1 and the traditional Shodashavarga set:
+第一版包含 D1 與傳統 Shodashavarga 組合：
 
-- D2, D3, D4, D7, D9, D10, D12;
-- D16, D20, D24, D27, D30;
-- D40, D45, D60.
+- D2、D3、D4、D7、D9、D10、D12；
+- D16、D20、D24、D27、D30；
+- D40、D45、D60。
 
-Each varga response records the formula rule-set ID, planetary placements, divisional ascendant when time is known, sign lords, and boundary distance. A time-accuracy interval that crosses a divisional boundary creates a sensitivity warning rather than one unqualified placement.
+每張分盤必須記錄公式規則集識別字、行星落點、出生時間已知時的分盤上升、星座主星及距離邊界的度數。若出生時間誤差區間跨越分盤邊界，程式必須產生敏感度警告，不得只輸出一個毫無保留的落點。
 
-### 8.3 Vimshottari dasha
+### 8.3 Vimshottari 大運
 
-The engine derives the birth mahadasha from the Moon's nakshatra, calculates the remaining birth balance, and expands periods to the requested depth. Version 1 accepts depths 1 through 3: mahadasha, antardasha, and pratyantardasha. Each period includes its lord, UTC and local calendar boundaries, parent path, and calculation convention.
+引擎依月亮所在月宿推導出生大運，計算出生時的大運餘額，並展開至指定層級。第一版接受第一至第三層：Mahadasha、Antardasha 與 Pratyantardasha。每一期間包含主星、UTC 與當地曆法起訖時間、父層路徑及計算慣例。
 
-### 8.4 Rule evidence
+### 8.4 規則證據
 
-Version 1 derives:
+第一版推導：
 
-- sign and house lordship;
-- own sign, exaltation, debilitation, moolatrikona, and configurable friendship dignity;
-- direct and retrograde state;
-- combustion by a versioned threshold table;
-- conjunctions with exact angular separation;
-- Parashari aspects with source, target, aspect type, and degree evidence;
-- common named yogas through versioned rule IDs, initially including Parivartana, Gaja Kesari, Budha Aditya, Chandra Mangala, Neecha Bhanga, common Dhana/Raja patterns, and Viparita Raja patterns.
+- 星座與宮位主星；
+- 自有星座、擢升、落陷、Moolatrikona，以及可設定的行星友敵關係；
+- 順行與逆行；
+- 依版本化門檻表判定的燃燒；
+- 附精確角距的合相；
+- 附來源、目標、相位種類及度數證據的 Parāśari 相位；
+- 以版本化規則識別字表示的常見 Yoga，第一批包括 Parivartana、Gaja Kesari、Budha Aditya、Chandra Mangala、Neecha Bhanga、常見 Dhana／Raja 組合，以及 Viparita Raja 組合。
 
-Every derived rule includes `rule_id`, input evidence, result, strength qualifiers, source note, and rule-set version. The API does not convert a triggered rule directly into a guaranteed life event.
+每項衍生規則包含 `rule_id`、輸入證據、結果、強弱修飾、來源說明及規則集版本。API 不得將一項已觸發規則直接轉換成必然發生的人生事件。
 
-## 9. Output Contract
+## 9. 輸出格式
 
-The response has stable top-level sections:
+回應具有固定的頂層結構：
 
 ```json
 {
@@ -258,37 +258,37 @@ The response has stable top-level sections:
 }
 ```
 
-`llm_context` is generated from the same typed response, not by a second calculation. It includes:
+`llm_context` 必須由同一份具型別的回應資料產生，不得進行第二套計算。內容包括：
 
-- compact placements and lordships;
-- strongest exact conjunctions and aspects;
-- dignity and combustion qualifiers;
-- important varga confirmations and contradictions;
-- active dasha periods for a caller-supplied reference date;
-- sensitivity and uncertainty statements;
-- evidence IDs that point back to the full response.
+- 精簡行星落點與宮主關係；
+- 最精確的重要合相與相位；
+- 尊貴狀態與燃燒修飾；
+- 重要分盤中的重複確認及矛盾；
+- 依呼叫者指定參考日期選出的有效大運；
+- 敏感度與不確定性說明；
+- 可回指完整回應的證據識別字。
 
-Numbers remain numeric. Human-readable labels are additional fields and never replace exact values.
+數值欄位必須保持數值型別。可另外提供人類可讀標籤，但不得以標籤取代精確數值。
 
 ## 10. HTTP API
 
-The public API is versioned under `/v1`:
+公開 API 以 `/v1` 進行版本管理：
 
-- `GET /health`: process and ephemeris readiness.
-- `GET /v1/config`: supported profiles, settings, versions, and limits.
-- `POST /v1/locations/resolve`: low-volume address resolution.
-- `POST /v1/charts/calculate`: complete or date-range calculation.
-- `GET /v1/prompts/full-reading?language=zh-TW`: versioned AI prompt template.
-- `GET /docs`: interactive FastAPI documentation.
-- `GET /openapi.json`: machine-readable tool schema.
+- `GET /health`：程序與星曆資料就緒狀態。
+- `GET /v1/config`：支援的設定檔、設定、版本及限制。
+- `POST /v1/locations/resolve`：低流量地址解析。
+- `POST /v1/charts/calculate`：完整計算或日期範圍計算。
+- `GET /v1/prompts/full-reading?language=zh-TW`：版本化 AI Prompt 範本。
+- `GET /docs`：FastAPI 互動式說明文件。
+- `GET /openapi.json`：機器可讀的工具 Schema。
 
-Successful chart calculations return HTTP 200. Validation and ambiguity errors use HTTP 422 with a stable structured error body. Rate limits use HTTP 429. Provider or ephemeris readiness failures use HTTP 503. Unexpected errors return an opaque request ID and do not expose stack traces.
+星盤計算成功時回傳 HTTP 200。輸入驗證與歧義錯誤使用 HTTP 422，並附固定格式的錯誤內容。超過限流時使用 HTTP 429。供應商或星曆資料未就緒時使用 HTTP 503。未預期錯誤只回傳不透明的請求識別字，不得暴露 Stack Trace。
 
-The request body limit is 16 KiB. Version 1 has no authentication, accepts no file uploads, and performs no arbitrary URL fetches. Default in-memory per-IP limits are 30 chart calculations per minute and 5 address resolutions per minute on a single free-tier instance. Limit values are exposed by `/v1/config` and may be reduced through deployment configuration.
+請求本文上限為 16 KiB。第一版沒有身分驗證、不接受檔案上傳，也不允許任意網址擷取。單一免費方案實例預設每個 IP 每分鐘最多計算 30 張星盤、解析 5 次地址。`/v1/config` 必須公開限制值，部署設定可以將限制調低。
 
-## 11. CLI and Python API
+## 11. CLI 與 Python API
 
-The CLI provides:
+CLI 提供：
 
 ```text
 bvr-star calculate --input INPUT.json [--output OUTPUT.json]
@@ -298,47 +298,47 @@ bvr-star prompt --language zh-TW
 bvr-star serve --host 127.0.0.1 --port 8000
 ```
 
-JSON is written to standard output unless `--output` is provided. Diagnostics go to standard error, so an AI can parse standard output without stripping log text. Errors use nonzero exit codes and the same stable error model as HTTP.
+若未提供 `--output`，JSON 寫入標準輸出；診斷資訊寫入標準錯誤，使 AI 不必先清除日誌即可解析標準輸出。錯誤使用非零結束碼，並採用與 HTTP 相同的固定錯誤格式。
 
-The Python API accepts and returns the canonical typed models. Adapters do not maintain separate calculation result types.
+Python API 接受並回傳標準型別模型。不同介面不得維護各自獨立的計算結果型別。
 
-## 12. AI Prompt Package
+## 12. AI Prompt 套件
 
-The repository includes concise prompts in `prompts/zh-TW/` and `prompts/en/`. The Traditional Chinese full-reading prompt instructs an AI to:
+儲存庫在 `prompts/zh-TW/` 與 `prompts/en/` 提供簡潔 Prompt。繁體中文全面報告 Prompt 指示 AI：
 
-1. Collect birth date, local birth time, birthplace, and stated time accuracy.
-2. Call the public API or local CLI before interpreting.
-3. Use calculated fields and evidence IDs as the only chart source.
-4. Separate `計算事實`, `傳統占星規則`, and `綜合解讀`.
-5. Cover personality, family, career, relationships, wealth, appearance, and health as traditional interpretations.
-6. Present past-event material as dated hypotheses for user verification.
-7. Surface all time, location, varga, and rule warnings near affected claims.
-8. Refer to the person as `命主` unless the user assigns another role.
-9. Treat medical, financial, and relationship material as reflective guidance rather than diagnosis or certainty.
+1. 收集出生日期、當地出生時間、出生地及時間準確度。
+2. 解讀前先呼叫公開 API 或本機 CLI。
+3. 只以計算欄位與證據識別字作為星盤來源。
+4. 分開標示「計算事實」「傳統占星規則」與「綜合解讀」。
+5. 以傳統占星解讀涵蓋性格、家庭、事業、姻緣、財富、長相與健康。
+6. 將過往事件內容表達為附日期的待驗證假設。
+7. 在受影響結論附近揭露時間、地點、分盤及規則警告。
+8. 除非使用者指定其他角色，否則一律稱為「命主」。
+9. 將醫療、財務與關係內容定位為反思參考，不冒充診斷或確定事實。
 
-The prompt contains positive ordered steps and completion criteria. Calculation conventions live in the API response and calculation documentation as the single source of truth; the prompt points to those fields instead of duplicating tables that can become stale.
+Prompt 必須使用正向、依序排列的操作步驟與完成條件。計算慣例以 API 回應及計算文件為單一真實來源；Prompt 只指向相關欄位，不重複可能過時的表格。
 
-README examples include:
+README 範例包括：
 
-- a copyable Chinese prompt using the public endpoint;
-- a local CLI prompt for Codex or another coding agent;
-- a curl example;
-- a Python example;
-- instructions for importing `openapi.json` into an AI tool/action system.
+- 可直接複製、使用公開 API 的中文 Prompt；
+- 供 Codex 或其他程式代理使用的本機 CLI Prompt；
+- curl 範例；
+- Python 範例；
+- 將 `openapi.json` 匯入 AI 工具或 Action 系統的說明。
 
-## 13. Privacy, Safety, and Operations
+## 13. 隱私、安全與維運
 
-- The API does not persist requests or responses.
-- Application logs contain request IDs, status, latency, and error category, not request bodies or birth data.
-- The public API returns astrology calculations and rule evidence, not medical or financial diagnoses.
-- CORS permits public non-credentialed use; the service does not accept cookies.
-- Geocoder calls use strict throttling and a replaceable provider.
-- Dependency versions and downloaded ephemeris artifacts are pinned and checksum-verified.
-- `/health` verifies that the required ephemeris source is ready before reporting healthy.
+- API 不持久保存請求或回應。
+- 應用程式日誌只記錄請求識別字、狀態、延遲及錯誤類別，不記錄請求本文或出生資料。
+- 公開 API 回傳占星計算與規則證據，不產生醫療或財務診斷。
+- CORS 允許公開、無憑證的使用方式；服務不接受 Cookie。
+- 地理編碼呼叫採嚴格限流，且供應商可替換。
+- 相依套件版本及下載的星曆資料必須固定版本並驗證 Checksum。
+- `/health` 必須在回報健康前確認所需星曆來源已就緒。
 
-## 14. Repository and Documentation
+## 14. 儲存庫與文件
 
-The intended repository layout is:
+預定儲存庫結構：
 
 ```text
 src/bvr_star/
@@ -358,69 +358,69 @@ SECURITY.md
 CONTRIBUTING.md
 ```
 
-Documentation includes:
+文件包括：
 
-- quick start and public API URL;
-- calculation conventions and supported date range;
-- request and response schemas;
-- rule and evidence catalog;
-- address, timezone, and birth-time accuracy behavior;
-- AI integration guide;
-- deployment and self-hosting guide;
-- Swiss Ephemeris and third-party license notices.
+- 快速開始與公開 API 網址；
+- 計算慣例及支援日期範圍；
+- 請求與回應 Schema；
+- 規則與證據目錄；
+- 地址、時區及出生時間準確度的處理方式；
+- AI 整合指南；
+- 部署與自行託管指南；
+- Swiss Ephemeris 及第三方授權聲明。
 
-The project uses AGPL-3.0 because Swiss Ephemeris is offered under AGPL or a professional license. A closed-source deployment must obtain and comply with the appropriate Swiss Ephemeris professional license.
+由於 Swiss Ephemeris 採 AGPL 或專業授權雙軌制，本專案使用 AGPL-3.0。若要進行閉源部署，必須取得並遵守適用的 Swiss Ephemeris 專業授權。
 
-## 15. Deployment
+## 15. 部署
 
-The first public deployment uses a Docker-based Render web service connected to `Omurok/BVR-Star`. `render.yaml` requests the free plan, binds the application to `0.0.0.0:$PORT`, checks `/health`, and performs automatic deployment from the main branch.
+首次公開部署使用連結至 `Omurok/BVR-Star` 的 Docker 型 Render Web Service。`render.yaml` 指定免費方案，讓應用程式監聽 `0.0.0.0:$PORT`，以 `/health` 作為健康檢查，並從 `main` 分支自動部署。
 
-The expected service name is `bvr-star`; the actual `onrender.com` URL is recorded in README and prompt files only after Render assigns it. The design does not assume that a particular subdomain is available.
+預期服務名稱為 `bvr-star`；實際 `onrender.com` 網址必須等 Render 指派後，才能寫入 README 與 Prompt。設計不得假設特定子網域一定可用。
 
-The free service may sleep after inactivity and have a cold start. README and API integration guidance state this constraint. Moving to an always-on paid instance is a separate billing decision.
+免費服務可能在閒置後休眠並產生 Cold Start。README 與 API 整合指南必須說明此限制。改用持續在線的付費實例屬於另一項付費決策。
 
-Deployment requires the user's Render account to connect the public GitHub repository. If the current environment lacks an authenticated Render session, the implementation stops at the smallest required authorization step and asks the user to complete it.
+部署需要使用者以 Render 帳號連結公開 GitHub 儲存庫。如果目前環境沒有已驗證的 Render 登入狀態，實作流程必須停在最小必要授權步驟，請使用者完成授權。
 
-## 16. Testing Strategy
+## 16. 測試策略
 
-Implementation follows red-green-refactor. Every nontrivial public function begins with a failing behavior test.
+實作採用 Red-Green-Refactor。每個具實際邏輯的公開函式，必須先有一項會失敗的行為測試。
 
-Test groups include:
+測試群組包括：
 
-- literal unit fixtures for signs, nakshatras, padas, wraparound, vargas, aspects, combustion, and dasha boundaries;
-- time tests for historical offsets, nonexistent times, overlapping times, and UTC conversion;
-- offline location tests using recorded complete provider responses rather than live mocks with partial shapes;
-- ephemeris adapter tests against pinned official `swetest` fixtures;
-- a golden reference chart for 1983-06-15 03:58:00, Asia/Taipei, Lingya District coordinates;
-- sensitivity tests that cross an ascendant or divisional boundary;
-- CLI integration tests that parse standard output as the canonical schema;
-- API tests for success, partial charts, ambiguity, validation, throttling, and unavailable dependencies;
-- Docker smoke tests that start the image, wait for readiness, and call `/health` and `/v1/charts/calculate`.
+- 星座、月宿、Pada、360 度環繞、分盤、相位、燃燒及大運邊界的人工固定值單元測試；
+- 歷史 UTC 時差、不存在時間、重疊時間及 UTC 轉換測試；
+- 使用完整錄製供應商回應的離線地點測試，不以缺少欄位的簡化 Mock 取代；
+- 以固定版本官方 `swetest` 結果驗證星曆介面；
+- 1983-06-15 03:58:00、Asia/Taipei、高雄市苓雅區座標的黃金基準盤；
+- 跨越上升或分盤邊界的敏感度測試；
+- 將標準輸出解析成標準 Schema 的 CLI 整合測試；
+- 成功、日期盤、地點歧義、輸入驗證、限流及相依服務不可用的 API 測試；
+- 啟動映像、等待就緒，再呼叫 `/health` 與 `/v1/charts/calculate` 的 Docker Smoke Test。
 
-Expected astronomical values are literal fixtures captured from the pinned official tool, not values recomputed by helpers under test. Tolerances are documented per field. The previously discussed chart is a regression target, not the sole astronomical oracle.
+天文預期值必須是從固定版本官方工具取得的常值，不得由受測程式的輔助函式重新計算。每種欄位必須記錄允許誤差。先前討論的星盤是回歸測試目標，但不是唯一的天文資料來源。
 
-GitHub Actions must run tests, static analysis, packaging, and Docker build on pushes and pull requests.
+GitHub Actions 必須在 Push 與 Pull Request 時執行測試、靜態分析、套件建置及 Docker 建置。
 
-## 17. Acceptance Criteria
+## 17. 驗收條件
 
-Version 1 is accepted only when all of the following are evidenced:
+第一版只有在以下每一項都有證據時才能驗收：
 
-1. One canonical request produces schema-valid, deterministic output through Python, CLI, and HTTP.
-2. The reference chart agrees with pinned `swetest` fixtures within documented tolerances.
-3. Raman ayanamsha, mean nodes, whole-sign houses, nakshatra/pada, the listed vargas, three dasha depths, rule evidence, and sensitivity output are covered by tests.
-4. Missing-time mode contains ranges and excludes time-sensitive fields without inventing a birth time.
-5. Ambiguous address and civil-time inputs produce actionable structured errors.
-6. The AI prompt calls the calculation interface first and can produce a report without recalculating chart values.
-7. The Docker image starts from a clean build and passes live health and chart smoke tests.
-8. GitHub Actions passes on the public `Omurok/BVR-Star` repository.
-9. The public Render URL returns a healthy response and a successful reference calculation.
-10. README records the live URL, cold-start limitation, calculation profile, privacy behavior, and licensing.
+1. 同一份標準請求經 Python、CLI 及 HTTP 介面產生符合 Schema 且可重複的相同結果。
+2. 基準盤在文件記錄的允許誤差內符合固定版本的 `swetest` 結果。
+3. Raman Ayanāṃśa、平均交點、整宮制、月宿／Pada、指定分盤、三層大運、規則證據及敏感度都有測試保護。
+4. 缺少時間模式回傳範圍、排除時間敏感欄位，且不虛構出生時間。
+5. 地址或民用時間有歧義時，回傳可採取行動的結構化錯誤。
+6. AI Prompt 先呼叫計算介面，且能在不重算星盤數值的前提下完成報告。
+7. Docker 映像可從乾淨環境建置，並通過即時健康與星盤 Smoke Test。
+8. 公開 `Omurok/BVR-Star` 儲存庫的 GitHub Actions 全部通過。
+9. 公開 Render 網址能回傳健康狀態及成功的基準盤計算。
+10. README 記錄正式網址、Cold Start 限制、計算設定檔、隱私處理及授權。
 
-## 18. External References
+## 18. 外部參考資料
 
-- Swiss Ephemeris programming interface: <https://www.astro.com/swisseph/swephprg.htm>
-- Swiss Ephemeris licensing: <https://www.astro.com/swisseph/sweph_e.htm>
-- IANA time zone database: <https://www.iana.org/time-zones/tz-link>
-- Nominatim usage policy: <https://operations.osmfoundation.org/policies/nominatim/>
-- Render web services: <https://render.com/docs/web-services>
-- Render free-service limitations: <https://render.com/docs/free>
+- Swiss Ephemeris 程式介面：<https://www.astro.com/swisseph/swephprg.htm>
+- Swiss Ephemeris 授權：<https://www.astro.com/swisseph/sweph_e.htm>
+- IANA 時區資料庫：<https://www.iana.org/time-zones/tz-link>
+- Nominatim 使用政策：<https://operations.osmfoundation.org/policies/nominatim/>
+- Render Web Service：<https://render.com/docs/web-services>
+- Render 免費服務限制：<https://render.com/docs/free>
