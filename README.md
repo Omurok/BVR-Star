@@ -4,9 +4,29 @@
 
 > 占星是傳統象徵系統，不是經科學證實的人格診斷或事件預測工具。本服務不提供醫療、法律或財務診斷。
 
+## 最快使用
+
+不需要安裝程式，也不需要理解 JSON：
+
+1. 打開 [BVR-Star 網頁表單](https://bvr-star.onrender.com/)；
+2. 輸入出生日期、時間與出生地；
+3. 計算完成後按「複製給 AI」，貼到 ChatGPT、Claude、Gemini 或其他模型。
+
+網站只負責排出星盤資料，不會呼叫 OpenAI，也不需要 AI API 金鑰。BVR-Star 應用程式不把出生資料或回應寫入資料庫；模型解讀仍由使用者選擇的平台負責。詳細界線見[隱私政策](https://bvr-star.onrender.com/privacy)。
+
+若要建立可自動呼叫 BVR-Star 的自訂 GPT：
+
+- Action Schema：<https://bvr-star.onrender.com/gpt/action-openapi.yaml>
+- 完整繁中 Instructions：[`gpt/instructions-zh-TW.md`](gpt/instructions-zh-TW.md)
+- 非技術設定說明：[`docs/custom-gpt-setup.md`](docs/custom-gpt-setup.md)
+
+自訂 GPT 使用者只需輸入出生日期、時間與地點；GPT 會自動呼叫唯一的 `calculateBvrChart` Action，成功取得資料後才開始解讀。
+
 ## 公開 API
 
-- API：<https://bvr-star.onrender.com>
+- 通用表單：<https://bvr-star.onrender.com/>
+- 自訂 GPT Action：<https://bvr-star.onrender.com/gpt/action-openapi.yaml>
+- 隱私政策：<https://bvr-star.onrender.com/privacy>
 - 互動文件：<https://bvr-star.onrender.com/docs>
 - OpenAPI：<https://bvr-star.onrender.com/openapi.json>
 - AI Prompt：<https://bvr-star.onrender.com/v1/prompts/full-reading?language=zh-TW>
@@ -56,11 +76,13 @@ AI 應先從可查證地圖資料取得緯度、經度與 IANA 時區，再將�
 
 ## 給 AI 直接使用
 
+自訂 GPT 建議匯入專用的 [`action-openapi.yaml`](https://bvr-star.onrender.com/gpt/action-openapi.yaml)。它只公開一個簡化計算工具，避免模型在完整 API 的多個端點與深層欄位間選錯。一般開發者仍可使用完整 `openapi.json`。
+
 把以下文字貼給支援網路工具或 HTTP Action 的 AI：
 
 > 使用 <https://github.com/Omurok/BVR-Star> 的計算慣例。先收集我的出生日期、出生地當地時間、出生地與時間準確度，再 POST 至 `https://bvr-star.onrender.com/v1/charts/calculate`。只使用 API JSON 中的計算數值，不自行重算。把計算事實、傳統占星規則與綜合解讀分開，並依 `warnings` 和 `sensitivity` 降低不穩定結論的強度。報告涵蓋性格、家庭、事業、姻緣、財富、長相、健康與大運；過往事件只列為附日期與證據 ID 的待驗證假設。除非我指定，稱盤主為「命主」，不要把命主預設為帳號主人。說明占星並非科學診斷，不冒充 B. V. Raman 本人。
 
-更完整、可直接複製的版本在 [繁體中文 Prompt](prompts/zh-TW/full-reading.md)。AI 平台可把 [`openapi.json`](https://bvr-star.onrender.com/openapi.json) 匯入成 Action / Tool。
+更完整、可直接複製的版本在 [繁體中文 Prompt](prompts/zh-TW/full-reading.md)。自訂 GPT 請優先使用專用 Action Schema；通用 AI 工具可匯入 [`openapi.json`](https://bvr-star.onrender.com/openapi.json)。
 
 ## 本機安裝
 

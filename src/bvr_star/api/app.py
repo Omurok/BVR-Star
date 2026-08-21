@@ -9,6 +9,7 @@ from collections import defaultdict, deque
 from datetime import date
 from datetime import time as civil_time
 from importlib import resources
+from pathlib import Path
 from threading import Lock
 from typing import Annotated
 
@@ -47,7 +48,14 @@ _bucket_lock = Lock()
 def _asset_text(*parts: str) -> str:
     """Read a UTF-8 asset packaged inside the installed bvr_star wheel."""
 
-    return resources.files("bvr_star").joinpath(*parts).read_text(encoding="utf-8")
+    packaged = resources.files("bvr_star").joinpath(*parts)
+    if packaged.is_file():
+        return packaged.read_text(encoding="utf-8")
+    if parts and parts[0] == "gpt_assets":
+        source_asset = Path(__file__).resolve().parents[3] / "gpt" / Path(*parts[1:])
+        if source_asset.is_file():
+            return source_asset.read_text(encoding="utf-8")
+    raise FileNotFoundError(f"Packaged BVR-Star asset not found: {'/'.join(parts)}")
 
 
 def _error(code: str, message: str, details=None, status: int = 422, request_id: str | None = None) -> JSONResponse:

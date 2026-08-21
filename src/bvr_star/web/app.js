@@ -265,7 +265,8 @@ function downloadJson() {
   document.body.append(link);
   link.click();
   link.remove();
-  URL.revokeObjectURL(url);
+  window.setTimeout(() => URL.revokeObjectURL(url), 0);
+  copyStatus.textContent = "完整 JSON 已開始下載。";
 }
 
 function resetForm() {

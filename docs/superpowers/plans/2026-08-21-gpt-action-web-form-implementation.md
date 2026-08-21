@@ -356,3 +356,16 @@ Commit documentation and any QA fixes with `docs: publish GPT Action and form us
 - [ ] **Step 6: Prepare the Custom GPT draft**
 
 Use `docs/custom-gpt-setup.md`, import the public Action schema, paste the instructions and starters, and validate the known birth case. Stop immediately before changing GPT visibility to `知道連結者可用`; ask the user for action-time confirmation before publishing the share link.
+
+## Execution Record and Fidelity Ledger
+
+Implemented inline on `main` after the user explicitly approved the design and requested direct implementation. No new automated test suite was added; the approved static, package, endpoint, and browser checks were used.
+
+- Copy and hierarchy: all approved headings, field labels, actions, privacy copy, and disclaimers are present; no hero eyebrow, login, pricing, testimonials, or unsupported claims were added.
+- Layout: the desktop form uses the approved two-column open composition; the result uses a ruled definition list rather than a card grid; 390 px mobile collapses both into one column.
+- Typography: editorial Traditional Chinese serif headings and deliberate 16 px-or-larger control typography match the concept hierarchy without browser-default control text.
+- Palette and decoration: true white, ink, indigo, blue-gray rules, green success, and amber warnings match the concept; no gradients, glow, horoscope wheels, crystals, or mystical clip art are present.
+- Action hierarchy: `開始計算` and `複製給 AI` are the only solid primary actions; JSON download is outlined and reset remains a text action.
+- Interaction: complete calculation, compact Action calculation, copy-to-clipboard, JSON download feedback, technical disclosure, reset, cold-start messaging, privacy page, desktop layout, and mobile layout were exercised in the browser.
+- Material fixes during QA: reduced the desktop heading to preserve the approved two-line break; prevented mobile brand wrapping; corrected reset focus; removed a skip-link overlay that the browser focused over the brand; delayed Blob URL revocation and added visible download feedback; added a source-tree fallback for the packaged Action YAML.
+- Above-the-fold copy diff: no unapproved visible copy remains. The implementation uses simpler code-native linework than the concept illustration, which is an intentional no-external-asset interpretation consistent with the approved design constraints.

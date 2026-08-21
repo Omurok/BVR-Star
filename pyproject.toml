@@ -42,7 +42,6 @@ packages = ["src/bvr_star"]
 
 [tool.hatch.build.targets.wheel.force-include]
 "prompts" = "bvr_star/prompt_templates"
-"src/bvr_star/web" = "bvr_star/web"
 "gpt" = "bvr_star/gpt_assets"
 
 [tool.ruff]
